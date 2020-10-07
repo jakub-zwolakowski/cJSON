@@ -28,13 +28,32 @@
 #include "unity/src/unity.h"
 #include "common.h"
 
+#ifdef TIS_GENERALIZED_MODE
+#include <tis_builtin.h>
+#endif
+
 static void parse_hex4_should_parse_all_combinations(void)
 {
     unsigned int number = 0;
     unsigned char digits_lower[6];
     unsigned char digits_upper[6];
     /* test all combinations */
+#ifdef TIS_GENERALIZED_MODE
+    unsigned int l = 0;
+    unsigned int u = 0;
+    for (size_t i = 0; i <= 5; i++) {
+        digits_lower[i] = tis_interval(48, 102);
+        digits_upper[i] = tis_interval(48, 102);
+    }
+    l = parse_hex4(digits_lower);
+    u = parse_hex4(digits_upper);
+
+    for (number = 0; number <= 0xFF; number++)
+#elif defined(__TRUSTINSOFT_ANALYZER__)
+    for (number = 0; number <= 0xFF; number++)
+#else
     for (number = 0; number <= 0xFFFF; number++)
+#endif
     {
         TEST_ASSERT_EQUAL_INT_MESSAGE(4, sprintf((char*)digits_lower, "%.4x", number), "sprintf failed.");
         TEST_ASSERT_EQUAL_INT_MESSAGE(4, sprintf((char*)digits_upper, "%.4X", number), "sprintf failed.");
