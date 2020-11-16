@@ -102,7 +102,6 @@ def make_common_config():
             "files": list(map(lambda file: path.join("..", file), c_files)),
             "compilation_cmd": string_of_options(compilation_cmd),
             "val-clone-on-recursive-calls-max-depth": 10000,
-            "val-warn-pointer-arithmetic-out-of-bounds": False,
             "filesystem": { "files": json_patch_tests + tests_and_expected },
         }
     )
