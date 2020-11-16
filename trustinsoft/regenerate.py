@@ -175,9 +175,6 @@ def make_test(test_file):
             "include": common_config_path,
         }
     )
-    # Add the option "no-results" for the test "parse_hex4.c".
-    if basename == "parse_hex4.c":
-        tis_test["no-results"] = True
     # Done.
     return tis_test
 
