@@ -7,7 +7,8 @@
 
 import re # sub
 import json # dumps, load
-import os # path, makedirs
+import os # path
+from os import path # basename, isdir, join
 import binascii # hexlify
 import shutil # copyfileobj
 import glob # iglob
@@ -36,14 +37,14 @@ def string_of_options(options):
 
 
 test_files_dir = "tests"
-fuzz_input_dir = os.path.join("fuzzing", "inputs")
+fuzz_input_dir = path.join("fuzzing", "inputs")
 
 # --------------------------------------------------------------------------- #
 # ---------------------------------- CHECKS --------------------------------- #
 # --------------------------------------------------------------------------- #
 
 def check_dir(dir):
-    if os.path.isdir(dir):
+    if path.isdir(dir):
         print("   > OK! Directory '%s' exists." % dir)
     else:
         exit("Directory '%s' not found." % dir)
@@ -58,13 +59,13 @@ check_dir(fuzz_input_dir)
 # -------------------- GENERATE trustinsoft/common.config ------------------- #
 # --------------------------------------------------------------------------- #
 
-common_config_path = os.path.join("trustinsoft", "common.config")
+common_config_path = path.join("trustinsoft", "common.config")
 
 def make_common_config():
     # C files.
     c_files = [
         "cJSON_Utils.c",
-        os.path.join("tests", "unity", "src", "unity.c"),
+        path.join("tests", "unity", "src", "unity.c"),
     ]
     # Compilation options.
     compilation_cmd = (
@@ -77,32 +78,28 @@ def make_common_config():
         }
     )
     # Filesystem.
-    json_patch_tests = sorted(
-        glob.iglob(os.path.join("tests", "json-patch-tests", "*.json"), recursive=False)
-    )
     json_patch_tests = list(
         map(lambda file:
             {
-                "name": os.path.join("json-patch-tests", os.path.basename(file)),
-                "from": os.path.join("..", file),
+                "name": path.join("json-patch-tests", path.basename(file)),
+                "from": path.join("..", file),
             },
-        json_patch_tests)
-    )
-    tests_and_expected = sorted(
-        glob.iglob(os.path.join("tests", "inputs", "test*"), recursive=False)
+            sorted(glob.iglob(path.join("tests", "json-patch-tests", "*.json"),
+                   recursive=False)))
     )
     tests_and_expected = list(
         map(lambda file:
             {
-                "name": os.path.join("inputs", os.path.basename(file)),
-                "from": os.path.join("..", file),
+                "name": path.join("inputs", path.basename(file)),
+                "from": path.join("..", file),
             },
-        tests_and_expected)
+            sorted(glob.iglob(path.join("tests", "inputs", "test*"),
+                              recursive=False)))
     )
     # Whole common.config JSON.
     config = (
         {
-            "files": list(map(lambda file: os.path.join("..", file), c_files)),
+            "files": list(map(lambda file: path.join("..", file), c_files)),
             "compilation_cmd": string_of_options(compilation_cmd),
             "val-clone-on-recursive-calls-max-depth": 10000,
             "val-warn-pointer-arithmetic-out-of-bounds": False,
@@ -114,14 +111,14 @@ def make_common_config():
 
 common_config = make_common_config()
 with open(common_config_path, "w") as file:
-    print("2. Generate the 'trustinsoft/common.config' file.")
+    print("2. Generate the '%s' file." % common_config_path)
     file.write(string_of_json(common_config))
 
 # --------------------------------------------------------------------------- #
 # -------------------- GENERATE trustinsoft/fuzz.config --------------------- #
 # --------------------------------------------------------------------------- #
 
-fuzz_config_path = os.path.join("trustinsoft", "fuzz.config")
+fuzz_config_path = path.join("trustinsoft", "fuzz.config")
 
 def make_fuzz_config():
     # C files.
@@ -129,21 +126,19 @@ def make_fuzz_config():
         "cJSON.c",
     ]
     # Filesystem.
-    fuzzing_files = sorted(
-        glob.iglob(os.path.join("fuzzing", "inputs", "test*"), recursive=False)
-    )
     fuzzing_files = list(
         map(lambda file:
             {
-                "name": os.path.join("fuzzing", "include", os.path.basename(file)),
-                "from": os.path.join("..", file),
+                "name": path.join(fuzz_input_dir, path.basename(file)),
+                "from": path.join("..", file),
             },
-        fuzzing_files)
+            sorted(glob.iglob(path.join(fuzz_input_dir, "test*"),
+                              recursive=False)))
     )
     # Whole fuzz.config JSON.
     config = (
         {
-            "files": list(map(lambda file: os.path.join("..", file), c_files)),
+            "files": list(map(lambda file: path.join("..", file), c_files)),
             "filesystem": { "files": fuzzing_files },
         }
     )
@@ -152,19 +147,27 @@ def make_fuzz_config():
 
 fuzz_config = make_fuzz_config()
 with open(fuzz_config_path, "w") as file:
-    print("3. Generate the 'trustinsoft/fuzz.config' file.")
+    print("3. Generate the '%s' file." % fuzz_config_path)
     file.write(string_of_json(fuzz_config))
 
 # --------------------------------------------------------------------------- #
 # -------------------------------- tis.config ------------------------------- #
 # --------------------------------------------------------------------------- #
 
-test_files = sorted(
-    glob.iglob(os.path.join(test_files_dir, "*.c"), recursive=False)
-)
+exclude_tests = [
+    "unity_setup.c"
+]
+
+def test_files():
+    test_files = sorted(
+        glob.iglob(path.join(test_files_dir, "*.c"), recursive=False)
+    )
+    for exclude_test in exclude_tests:
+        test_files.remove(path.join("tests", exclude_test))
+    return test_files
 
 def make_test(test_file):
-    basename = os.path.basename(test_file)
+    basename = path.basename(test_file)
     tis_test = (
         {
             "name": basename,
@@ -172,8 +175,10 @@ def make_test(test_file):
             "include": common_config_path,
         }
     )
+    # Add the option "no-results" for the test "parse_hex4.c".
     if basename == "parse_hex4.c":
         tis_test["no-results"] = True
+    # Done.
     return tis_test
 
 generalized_tests = [
@@ -200,27 +205,28 @@ generalized_tests = [
     }
 ]
 
-fuzz_input_files = sorted(
-    glob.iglob(os.path.join(fuzz_input_dir, "test*"), recursive=False)
-)
+def fuzz_input_files():
+    return sorted(
+        glob.iglob(path.join(fuzz_input_dir, "test*"), recursive=False)
+    )
 
 def make_fuzz_test(fuzz_input_file):
-    basename = os.path.basename(fuzz_input_file)
+    basename = path.basename(fuzz_input_file)
     return (
         {
             "name": ("afl.c " + basename),
-            "files": [ os.path.join("fuzzing", "afl.c") ],
-            "val-args": " " + os.path.join("fuzzing", "include", basename),
+            "files": [ path.join("fuzzing", "afl.c") ],
+            "val-args": " " + path.join(fuzz_input_dir, basename),
             "include": common_config_path,
             "include_": fuzz_config_path,
         }
     )
 
 tis_config = (
-    list(map(make_test, test_files)) +
+    list(map(make_test, test_files())) +
     generalized_tests +
-    list(map(make_fuzz_test, fuzz_input_files))
+    list(map(make_fuzz_test, fuzz_input_files()))
 )
 with open("tis.config", "w") as file:
-    print("4. Generate the tis.config file.")
+    print("4. Generate the 'tis.config' file.")
     file.write(string_of_json(tis_config))
