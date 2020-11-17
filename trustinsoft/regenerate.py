@@ -191,33 +191,8 @@ def make_fuzz_test(fuzz_input_file):
         }
     )
 
-generalized_tests = [
-    {
-        "name": "parse_hex4.c - GENERALIZED",
-        "main": "parse_hex4_should_parse_all_combinations",
-        "compilation_cmd":
-            string_of_options (
-                {
-                    "-D": [
-                        "UNITY_EXCLUDE_SETJMP_H",
-                        "TIS_GENERALIZED_MODE"
-                    ]
-                }
-            ),
-        "files": [
-            "tests/parse_hex4.c",
-            "cJSON_Utils.c",
-            "tests/unity/src/unity.c",
-        ],
-        "value-profile": "analyzer",
-        "val-slevel-merge-after-loop": "-@all",
-        "slevel": 1000
-    }
-]
-
 tis_config = (
     list(map(make_test, test_files())) +
-    generalized_tests +
     list(map(make_fuzz_test, fuzz_input_files()))
 )
 with open("tis.config", "w") as file:

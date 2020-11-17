@@ -28,32 +28,15 @@
 #include "unity/src/unity.h"
 #include "common.h"
 
-#ifdef TIS_GENERALIZED_MODE
-#include <tis_builtin.h>
-#endif
-
 static void parse_hex4_should_parse_all_combinations(void)
 {
     unsigned int number = 0;
     unsigned char digits_lower[6];
     unsigned char digits_upper[6];
     /* test all combinations */
-
-#ifdef TIS_GENERALIZED_MODE
-    /* Analyze parse_hex with all reasonable argument values. */
-    unsigned int l = 0;
-    unsigned int u = 0;
-    for (size_t i = 0; i < 6; i++) {
-        digits_lower[i] = tis_interval(32, 126);
-        digits_upper[i] = tis_interval(32, 126);
-    }
-    l = parse_hex4(digits_lower);
-    u = parse_hex4(digits_upper);
-#endif
-
 #if defined(__TRUSTINSOFT_ANALYZER__)
     /* Reduce. */
-    for (number = 0; number <= 0xFFFF; number++)
+    for (number = 0; number <= 0xFFF; number++)
 #else
     for (number = 0; number <= 0xFFFF; number++)
 #endif
