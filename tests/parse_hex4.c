@@ -53,7 +53,7 @@ static void parse_hex4_should_parse_all_combinations(void)
 
 #if defined(__TRUSTINSOFT_ANALYZER__)
     /* Reduce. */
-    for (number = 0; number <= 0xFFF; number++)
+    for (number = 0; number <= 0xFFFF; number++)
 #else
     for (number = 0; number <= 0xFFFF; number++)
 #endif
