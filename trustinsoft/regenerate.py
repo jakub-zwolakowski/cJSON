@@ -165,15 +165,13 @@ def test_files():
 
 def make_test(test_file):
     basename = path.basename(test_file)
-    tis_test = (
+    return (
         {
             "name": basename,
             "files": [ test_file ],
             "include": common_config_path,
         }
     )
-    # Done.
-    return tis_test
 
 def fuzz_input_files():
     return sorted(
