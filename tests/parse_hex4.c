@@ -35,7 +35,7 @@ static void parse_hex4_should_parse_all_combinations(void)
     unsigned char digits_upper[6];
     /* test all combinations */
 #if defined(__TRUSTINSOFT_ANALYZER__)
-    /* Reduce. */
+    /* Reduce the test's size for TIS CI. */
     for (number = 0; number <= 0xFFF; number++)
 #else
     for (number = 0; number <= 0xFFFF; number++)
